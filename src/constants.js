@@ -1,1 +1,1 @@
-ECHO is on.
+export const DB_NAME = "youtube";
