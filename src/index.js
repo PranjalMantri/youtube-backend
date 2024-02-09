@@ -8,7 +8,6 @@ const port = process.env.PORT || 8000;
 connectDB()
   .then(() => {
     app.on("error", (error) => {
-      console.log("Database connection failed");
       throw error;
     });
 
