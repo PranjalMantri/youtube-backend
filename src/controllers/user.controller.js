@@ -91,7 +91,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
-  console.log(createdUser);
+
   if (!createdUser) {
     throw new ApiError(500, "Something went wrong while registering the user");
   }
@@ -232,7 +232,19 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
-  const { oldPassword, newPassword, confirmNewPassword } = req.body;
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+
+  if (!oldPassword) {
+    throw new ApiError(400, "Provide the old password");
+  }
+
+  if (!newPassword) {
+    throw new ApiError(400, "Provide the new password");
+  }
+
+  if (!confirmPassword) {
+    throw new ApiError(400, "Provide the confirmPassword");
+  }
 
   const user = await User.findById(req.user._id);
 
@@ -242,7 +254,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Incorrect Password");
   }
 
-  if (newPassword !== confirmNewPassword) {
+  if (newPassword !== confirmPassword) {
     throw new ApiError(400, "Confirm password should match the new password");
   }
 
@@ -257,7 +269,9 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 const getCurrentUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
-    .json(200, { user: req.user }, "Retreived the current user successfully");
+    .json(
+      new ApiResponse(200, req.user, "Retreived the current user successfully")
+    );
 });
 
 const updateUserDetails = asyncHandler(async (req, res) => {
@@ -267,7 +281,7 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Provide fullname and username");
   }
 
-  const user = User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
