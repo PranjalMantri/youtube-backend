@@ -2,7 +2,10 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+  uploadOnCloudinary,
+  deleteFromCloudinary,
+} from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -53,8 +56,6 @@ const registerUser = asyncHandler(async (req, res) => {
     );
   }
 
-  // const avatarLocalPath = req.files?.avatar[0]?.path;
-
   let avatarLocalPath;
   if (req.files && req.files.avatar && req.files.avatar.length > 0) {
     avatarLocalPath = req.files.avatar[0].path;
@@ -82,13 +83,15 @@ const registerUser = asyncHandler(async (req, res) => {
     email,
     password,
     avatar: avatar.url,
+    avatarId: avatar.public_id,
     coverImage: coverImage?.url || "",
+    coverImageId: coverImage.public_id || "",
   });
 
   const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
-
+  console.log(createdUser);
   if (!createdUser) {
     throw new ApiError(500, "Something went wrong while registering the user");
   }
@@ -286,7 +289,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.file?.path;
 
   if (!avatarLocalPath) {
-    throw new ApiError(400, "Could'nt find avatar image");
+    throw new ApiError(400, "Couldn't find avatar image");
   }
 
   const avatar = await uploadOnCloudinary(avatarLocalPath);
@@ -295,15 +298,16 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Could not update avatar image");
   }
 
-  const user = await User.findByIdAndUpdate(
-    req.user._id,
-    {
-      $set: {
-        avatar: avatar.url,
-      },
-    },
-    { new: true }
-  ).select("-password -refreshToken");
+  const user = await User.findById(req.user._id).select(
+    "-password -refreshToken"
+  );
+
+  const oldAvatar = user.avatarId;
+
+  await deleteFromCloudinary(oldAvatar);
+
+  user.avatar = avatar.url;
+  user.save({ validateBeforeSave: false });
 
   return res
     .status(200)
@@ -323,15 +327,16 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Could not update cover image");
   }
 
-  const user = await User.findByIdAndUpdate(
-    req.user._id,
-    {
-      $set: {
-        coverImage: coverImage.url,
-      },
-    },
-    { new: true }
-  ).select("-password -refreshToken");
+  const user = await User.findById(req.user._id).select(
+    "-password -refreshToken"
+  );
+
+  const oldCoverImage = user.coverImageId;
+
+  await deleteFromCloudinary(oldCoverImage);
+
+  user.coverImage = coverImage.url;
+  user.save({ validateBeforeSave: false });
 
   return res
     .status(200)
@@ -344,6 +349,7 @@ export {
   logoutUser,
   changeCurrentPassword,
   getCurrentUser,
+  refreshAccessToken,
   updateUserDetails,
   updateUserAvatar,
   updateUserCoverImage,

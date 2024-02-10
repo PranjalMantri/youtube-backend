@@ -18,10 +18,20 @@ const uploadOnCloudinary = async (localFilePath) => {
     });
 
     fs.unlinkSync(localFilePath);
+    console.log(response);
     return response;
   } catch (error) {
     fs.unlinkSync(localFilePath);
   }
 };
 
-export { uploadOnCloudinary };
+const deleteFromCloudinary = async (resourceId) => {
+  try {
+    const response = await cloudinary.uploader.destroy(resourceId);
+    return response;
+  } catch (error) {
+    throw new ApiError(500, "Couldn't delete the resource");
+  }
+};
+
+export { uploadOnCloudinary, deleteFromCloudinary };
