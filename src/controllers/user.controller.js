@@ -8,6 +8,7 @@ import {
 } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import { response } from "express";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -279,16 +280,20 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const updateUserDetails = asyncHandler(async (req, res) => {
   const { fullName, username } = req.body;
 
-  if (!fullName || !username) {
-    throw new ApiError(400, "Provide fullname and username");
+  if (!fullName) {
+    throw new ApiError(404, "Fullname is required");
+  }
+
+  if (!username) {
+    throw new ApiError(404, "username is required");
   }
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        fullName,
-        username,
+        fullName: fullName,
+        username: username,
       },
     },
     {
@@ -320,9 +325,10 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
   const oldAvatar = user.avatarId;
 
-  await deleteFromCloudinary(oldAvatar);
+  const resp = await deleteFromCloudinary(oldAvatar);
 
   user.avatar = avatar.url;
+  user.avatarId = avatar.public_id;
   user.save({ validateBeforeSave: false });
 
   return res
@@ -352,6 +358,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   await deleteFromCloudinary(oldCoverImage);
 
   user.coverImage = coverImage.url;
+  user.coverImageId = coverImage.public_id;
   user.save({ validateBeforeSave: false });
 
   return res
