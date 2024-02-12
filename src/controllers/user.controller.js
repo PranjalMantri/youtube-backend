@@ -405,13 +405,16 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
         isSubscribed: {
           $cond: {
-            $if: [req.user?.id, "$subscribers.subscriber"],
-            $then: true,
-            $else: false,
+            if: {
+              $in: [req.user?._id, "$subscribers.subscriber"],
+            },
+            then: true,
+            else: false,
           },
         },
       },
     },
+
     {
       $project: {
         fullName: 1,
@@ -434,14 +437,14 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, channel[0], "User channel fetched successfuly"));
+    .json(new ApiResponse(200, channel[0], "Channel successfuly fetched"));
 });
 
 const getUserWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
     {
       $match: {
-        _id: mongoose.Types.ObjectId(req.user._id),
+        _id: new mongoose.Types.ObjectId(req.user._id),
       },
     },
     {
@@ -450,14 +453,14 @@ const getUserWatchHistory = asyncHandler(async (req, res) => {
         localField: "watchHistory",
         foreignField: "_id",
         as: "watchHistory",
-        pipline: [
+        pipeline: [
           {
             $lookup: {
               from: "users",
               localField: "owner",
               foreignField: "_id",
               as: "owner",
-              pipline: [
+              pipeline: [
                 {
                   $project: {
                     fullName: 1,
