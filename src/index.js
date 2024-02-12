@@ -11,8 +11,6 @@ connectDB()
       throw error;
     });
 
-    app.listen(port, () => {
-      console.log(`Example app listening on ${port}`);
-    });
+    app.listen(port, () => {});
   })
   .catch((err) => console.error("Database connection failed", err.message));
