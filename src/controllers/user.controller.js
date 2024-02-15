@@ -8,7 +8,6 @@ import {
 } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import { response } from "express";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -433,7 +432,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Channel does not exist");
   }
 
-  console.log(channel);
 
   return res
     .status(200)

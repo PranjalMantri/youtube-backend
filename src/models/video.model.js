@@ -3,10 +3,10 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const videoSchema = new mongoose.Schema(
   {
+    //TODO: make title unique
     title: {
       type: String,
       required: true,
-      unique: true,
       index: true,
     },
     description: {
@@ -17,7 +17,15 @@ const videoSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    videoFileId: {
+      type: String,
+      required: true,
+    },
     thumbnail: {
+      type: String,
+      required: true,
+    },
+    thumbnailId: {
       type: String,
       required: true,
     },
