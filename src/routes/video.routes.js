@@ -6,6 +6,8 @@ import {
   updateVideo,
   updateThumbnail,
   deleteVideo,
+  getVideoById,
+  togglePublishStatus,
 } from "../controllers/video.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -28,6 +30,7 @@ router.route("/upload").post(
   ]),
   publishVideo
 );
+router.route("/get-video/:videoId").get(getVideoById);
 router.route("/update-video-details/:videoId").patch(updateVideoDetails);
 
 router
@@ -39,4 +42,6 @@ router
   .patch(upload.single("thumbnail"), updateThumbnail);
 
 router.route("/delete/:videoId").get(deleteVideo);
+
+router.route("/toggle-publish-status/:videoId").patch(togglePublishStatus);
 export default router;

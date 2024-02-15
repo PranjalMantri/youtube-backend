@@ -62,7 +62,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     },
   ]);
 
-  res.status(200).json(
+  return res.status(200).json(
     new ApiResponse(
       200,
       {
@@ -125,24 +125,26 @@ const publishVideo = asyncHandler(async (req, res) => {
     duration: videoFile.duration,
   });
 
-  res
+  return res
     .status(200)
     .json(new ApiResponse(200, video, "Uploaded video successfuly"));
 });
 
 const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  // TODO: get video from id
+
+  if (!videoId) {
+    throw new ApiError(400, "Video not found");
+  }
+
+  const video = await Video.findById(videoId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Fetched video successfuly"));
 });
 
 const updateVideoDetails = asyncHandler(async (req, res) => {
-  // TODO: Update video details like title, description and thumbnail
-
-  //FIXME:
-  // get video id
-  // get video details like title, description
-  // update the details in database
-
   const { videoId } = req.params;
 
   if (!videoId) {
@@ -172,9 +174,7 @@ const updateVideoDetails = asyncHandler(async (req, res) => {
     }
   );
 
-  console.log(video);
-
-  res
+  return res
     .status(200)
     .json(new ApiResponse(202, video, "Testing Update Video Details function"));
 });
@@ -204,7 +204,7 @@ const updateVideo = asyncHandler(async (req, res) => {
   video.videoFileId = videoFile.public_id;
   video.save({ validateBeforeSave: true });
 
-  res
+  return res
     .status(200)
     .json(new ApiResponse(200, video, "Video Updated successfuly"));
 });
@@ -234,14 +234,12 @@ const updateThumbnail = asyncHandler(async (req, res) => {
   video.thumbnailId = thumbnail.public_id;
   video.save({ validateBeforeSave: true });
 
-  res
+  return res
     .status(200)
     .json(new ApiResponse(200, video, "Thumbnail Updated successfuly"));
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
-  // TODO: Delete the video
-
   const { videoId } = req.params;
 
   if (!videoId) {
@@ -250,11 +248,37 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
   const video = await Video.deleteOne({ _id: videoId });
 
-  res.status(200).json(new ApiResponse(200, {}, "Video deleted successfuly"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Video deleted successfuly"));
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+
+  if (!videoId) {
+    throw new ApiError(400, "Video not found");
+  }
+
+  const user = await User.find({
+    refreshToken: req.cookies.refreshToken,
+  });
+
+  const video = await Video.findById(videoId);
+
+  if (!user[0]._id.equals(video.owner)) {
+    throw new ApiError(
+      404,
+      "You do not have permission to edit this video's settings"
+    );
+  }
+
+  video.isPublished = !video.isPublished;
+  video.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Toggled publish status successfuly"));
 });
 
 export {
