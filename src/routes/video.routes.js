@@ -3,16 +3,19 @@ import {
   getAllVideos,
   publishVideo,
   updateVideoDetails,
+  updateVideo,
+  updateThumbnail,
+  deleteVideo,
 } from "../controllers/video.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
+router.use(verifyJWT);
 // secure routes
-router.route("/get-videos").get(verifyJWT, getAllVideos);
+router.route("/get-videos").get(getAllVideos);
 router.route("/upload").post(
-  verifyJWT,
   upload.fields([
     {
       name: "thumbnail",
@@ -25,18 +28,15 @@ router.route("/upload").post(
   ]),
   publishVideo
 );
-router.route("/update-video-details/:videoId").post(
-  verifyJWT,
-  upload.fields([
-    {
-      name: "thumbnail",
-      maxCount: 1,
-    },
-    {
-      name: "video",
-      maxCount: 1,
-    },
-  ]),
-  updateVideoDetails
-);
+router.route("/update-video-details/:videoId").patch(updateVideoDetails);
+
+router
+  .route("/update-video/:videoId")
+  .patch(upload.single("video"), updateVideo);
+
+router
+  .route("/update-thumbnail/:videoId")
+  .patch(upload.single("thumbnail"), updateThumbnail);
+
+router.route("/delete/:videoId").get(deleteVideo);
 export default router;
