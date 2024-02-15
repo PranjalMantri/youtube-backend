@@ -132,9 +132,44 @@ const getVideoById = asyncHandler(async (req, res) => {
   // TODO: get video from id
 });
 
-const updateVideo = asyncHandler(async (req, res) => {
-  const { videoId } = req.params;
+const updateVideoDetails = asyncHandler(async (req, res) => {
   // TODO: Update video details like title, description and thumbnail
+
+  //FIXME:
+  // get video id
+  // get video details like title, description
+  // update the details in database
+
+  const { videoId } = req.params;
+
+  const { title, description } = req.body;
+
+  if (!title) {
+    throw new ApiError(400, "Title is required");
+  }
+
+  if (!description) {
+    throw new ApiError(400, "Description is required");
+  }
+
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: {
+        title: title,
+        description: description,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  console.log(video);
+
+  res
+    .status(200)
+    .json(new ApiResponse(202, video, "Testing Update Video Details function"));
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
@@ -150,7 +185,7 @@ export {
   getAllVideos,
   publishVideo,
   getVideoById,
-  updateVideo,
+  updateVideoDetails,
   deleteVideo,
   togglePublishStatus,
 };
