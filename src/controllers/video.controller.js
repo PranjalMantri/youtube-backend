@@ -4,7 +4,6 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
-import { upload } from "../middlewares/multer.middleware.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   let {
@@ -12,15 +11,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
     limit = 10,
     query,
     sortBy = "createdAt",
-    sortType = 1,
+    sortType = 1, // Ascending
     userId,
   } = req.query;
-  // TODO: Get All videos based on query, sort and pagination
-
-  //FIXME:
-  // get user data
-  // Validte user data
-  // write pipepline to get videos based on query, sort and pagination
 
   // Converting string to interger
   page = Number.parseInt(page);
@@ -39,36 +32,43 @@ const getAllVideos = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Query is required");
   }
 
-  if (!userId) {
-    throw new ApiError(404, "User ID is required");
-  }
-
   // getting user
-  const user = await User.findById({
-    _id: userId,
+  const user = await User.findOne({
+    refreshToken: req.cookies.refreshToken,
   });
 
-  if (!user) {
+  if (!user._id) {
     throw new ApiError(404, "User not found");
   }
 
   // getting videos
-
-  const allVideos = await Video.aggregate([
+  const videos = await Video.aggregate([
     {
       $match: {
-        _id: userId,
+        owner: user._id,
+        title: {
+          $regex: query.trim(),
+          $options: "i",
+        },
+      },
+    },
+    {
+      $sort: {
+        [sortBy]: sortType,
       },
     },
   ]);
 
-  if (!allVideos.length) {
-    throw new ApiError(404, "No videos found");
-  }
-
-  console.log(allVideos);
-
-  res.status(200).json(new ApiResponse(200, {}, "Successfuly fetched"));
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        numOfVideos: videos.length,
+        videos,
+      },
+      "Testing get All Videos"
+    )
+  );
 });
 
 const publishVideo = asyncHandler(async (req, res) => {
@@ -127,7 +127,7 @@ const publishVideo = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, video, "Uploaded video successfuly"));
 });
 
-const getVideoId = asyncHandler(async (req, res) => {
+const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   // TODO: get video from id
 });
@@ -149,7 +149,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 export {
   getAllVideos,
   publishVideo,
-  getVideoId,
+  getVideoById,
   updateVideo,
   deleteVideo,
   togglePublishStatus,
