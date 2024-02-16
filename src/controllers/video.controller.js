@@ -45,7 +45,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
   }
 
   // getting videos
-  const videos = await Video.aggregate([
+  const allVideos = await Video.aggregate([
     {
       $match: {
         owner: user._id,
@@ -62,7 +62,10 @@ const getAllVideos = asyncHandler(async (req, res) => {
     },
   ]);
 
-  //TODO: Use Pagination
+  const videos = await Video.aggregatePaginate(Video.aggregate(allVideos), {
+    page,
+    limit,
+  });
 
   return res.status(200).json(
     new ApiResponse(
