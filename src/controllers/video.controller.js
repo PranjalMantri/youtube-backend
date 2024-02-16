@@ -62,6 +62,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
     },
   ]);
 
+  //TODO: Use Pagination
+
   return res.status(200).json(
     new ApiResponse(
       200,
@@ -139,6 +141,10 @@ const getVideoById = asyncHandler(async (req, res) => {
 
   const video = await Video.findById(videoId);
 
+  if (!video) {
+    throw new ApiError(404, "Video Not found");
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, video, "Fetched video successfuly"));
@@ -152,7 +158,7 @@ const updateVideoDetails = asyncHandler(async (req, res) => {
   }
 
   const { title, description } = req.body;
-
+  console.log(req.body);
   if (!title) {
     throw new ApiError(400, "Title is required");
   }

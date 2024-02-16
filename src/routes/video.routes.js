@@ -16,22 +16,29 @@ const router = Router();
 
 router.use(verifyJWT);
 // secure routes
-router.route("/get-videos").get(getAllVideos);
-router.route("/upload").post(
-  upload.fields([
-    {
-      name: "thumbnail",
-      maxCount: 1,
-    },
-    {
-      name: "video",
-      maxCount: 1,
-    },
-  ]),
-  publishVideo
-);
-router.route("/get-video/:videoId").get(getVideoById);
-router.route("/update-video-details/:videoId").patch(updateVideoDetails);
+
+router
+  .route("/")
+  .get(getAllVideos)
+  .post(
+    upload.fields([
+      {
+        name: "thumbnail",
+        maxCount: 1,
+      },
+      {
+        name: "video",
+        maxCount: 1,
+      },
+    ]),
+    publishVideo
+  );
+
+router
+  .route("/:videoId")
+  .get(getVideoById)
+  .patch(updateVideoDetails)
+  .delete(deleteVideo);
 
 router
   .route("/update-video/:videoId")
@@ -40,8 +47,6 @@ router
 router
   .route("/update-thumbnail/:videoId")
   .patch(upload.single("thumbnail"), updateThumbnail);
-
-router.route("/delete/:videoId").get(deleteVideo);
 
 router.route("/toggle-publish-status/:videoId").patch(togglePublishStatus);
 export default router;
