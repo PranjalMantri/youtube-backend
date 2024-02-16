@@ -161,7 +161,7 @@ const updateVideoDetails = asyncHandler(async (req, res) => {
   }
 
   const { title, description } = req.body;
-  console.log(req.body);
+
   if (!title) {
     throw new ApiError(400, "Title is required");
   }

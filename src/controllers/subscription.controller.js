@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import { Subscription } from "../models/subscription.model.js";
@@ -26,21 +27,21 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     refreshToken: req.cookies.refreshToken,
   });
 
-  let subscibe, unsubscribe;
+  let subscribe, unsubscribe;
 
   const userIsSubscribed = await Subscription.findOne({
-    subsciber: user._id,
+    subscriber: user._id,
     channel: channelId,
   });
 
   // If user is not subscribed -> subscribe
   if (!userIsSubscribed) {
-    subscibe = await Subscription.create({
-      subsciber: user._id,
+    subscribe = await Subscription.create({
+      subscriber: user._id,
       channel: channelId,
     });
 
-    if (!subscibe) {
+    if (!subscribe) {
       throw new ApiError(
         500,
         "Something went wrong while subscribing to the channel"
@@ -49,7 +50,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
   } else {
     // If user is already subscriber -> unsubscribe
     unsubscribe = await Subscription.findOneAndDelete({
-      subsciber: user._id,
+      subscriber: user._id,
       channel: channelId,
     });
 
@@ -61,20 +62,76 @@ const toggleSubscription = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(
-      new ApiResponse(
-        200,
-        subscibe || unsubscribe,
-        "Creating the toggle subscription functionality"
-      )
+      new ApiResponse(200, subscribe || unsubscribe, "Subscribed/Unsubscribed")
     );
 });
 
-const getUserChannelSubscribers = asyncHandler(async (req, res) => {
+const getChannelSubscribers = asyncHandler(async (req, res) => {
   const { channelId } = req.params;
+
+  if (!isValidObjectId(channelId)) {
+    throw new ApiError(404, "Channel not found");
+  }
+
+  const subscribers = await Subscription.aggregate([
+    {
+      $match: {
+        channel: new mongoose.Types.ObjectId(channelId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "subscriber",
+        foreignField: "_id",
+        as: "subscribers",
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        channel: 1,
+        subscriber: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        subscribers: {
+          $arrayElemAt: ["$subscribers", 0],
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        subscriber: 1,
+        channel: 1,
+        subscribers: {
+          username: 1,
+          avatar: 1,
+        },
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    },
+  ]);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        numOfSubscribers: subscribers.length,
+        subscribers,
+      },
+      "Creating a function to get a channel's subscriber"
+    )
+  );
 });
 
 const getSusbcribedChannels = asyncHandler(async (req, res) => {
+  // TODO:
+  // get subscriber Id
+  // validate subsriber Id
+  // 
   const { subscriberId } = req.params;
 });
 
-export { toggleSubscription, getUserChannelSubscribers, getSusbcribedChannels };
+export { toggleSubscription, getChannelSubscribers, getSusbcribedChannels };
