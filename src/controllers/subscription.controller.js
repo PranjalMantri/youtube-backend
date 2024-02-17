@@ -131,11 +131,6 @@ const getChannelSubscribers = asyncHandler(async (req, res) => {
 });
 
 const getSusbcribedChannels = asyncHandler(async (req, res) => {
-  // TODO:
-  // get subscriber Id
-  // validate subsriber Id
-  // get all the documents that have the subscriber id -> you get all the channels user is subsribed to
-
   const { subscriberId } = req.params;
 
   if (!isValidObjectId(subscriberId)) {

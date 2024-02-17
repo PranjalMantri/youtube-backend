@@ -3,7 +3,6 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const videoSchema = new mongoose.Schema(
   {
-    //TODO: make title unique
     title: {
       type: String,
       required: true,

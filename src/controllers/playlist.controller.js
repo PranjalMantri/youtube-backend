@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { User } from "../models/user.model.js";
 import { Playlist } from "../models/playlist.model.js";
+import { Video } from "../models/video.model.js";
 import { isValidObjectId } from "mongoose";
 
 const createPlaylist = asyncHandler(async (req, res) => {
@@ -68,11 +69,6 @@ const getUserPlaylist = asyncHandler(async (req, res) => {
 });
 
 const getPlaylistById = asyncHandler(async (req, res) => {
-  //TODO: get playlist by id
-  // get playlist id
-  // validate playlist id
-  // return the playlist with that id
-
   console.log("Getting user playlists");
   const { playlistId } = req.params;
 
@@ -93,4 +89,100 @@ const getPlaylistById = asyncHandler(async (req, res) => {
     );
 });
 
-export { createPlaylist, getUserPlaylist, getPlaylistById };
+const addVideoToPlaylist = asyncHandler(async (req, res) => {
+  const { playlistId, videoId } = req.params;
+
+  if (!isValidObjectId(playlistId)) {
+    throw new ApiError(400, "Invalid playlist id");
+  }
+
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video id");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video does not exist");
+  }
+
+  const playlist = await Playlist.findByIdAndUpdate(
+    playlistId,
+    {
+      $push: {
+        videos: videoId,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!playlist) {
+    throw new ApiError(
+      500,
+      "Something went wrong while adding videos to the playlist"
+    );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, playlist, "Video successfully added to the playlist")
+    );
+});
+
+const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
+  const { videoId, playlistId } = req.params;
+
+  if (!isValidObjectId(playlistId)) {
+    throw new ApiError(400, "Invalid playlist id");
+  }
+
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video id");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video does not exist");
+  }
+
+  const playlist = await Playlist.findByIdAndUpdate(
+    playlistId,
+    {
+      $pull: {
+        videos: videoId,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!playlist) {
+    throw new ApiError(
+      500,
+      "Something went wrong while removing videos from playlist"
+    );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        playlist,
+        "Video successfully removed from the playlist"
+      )
+    );
+});
+
+export {
+  createPlaylist,
+  getUserPlaylist,
+  getPlaylistById,
+  addVideoToPlaylist,
+  removeVideoFromPlaylist,
+};
