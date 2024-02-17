@@ -14,7 +14,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
   }
 
   page = Number(page);
-  limit = Number(page);
+  limit = Number(limit);
 
   if (!Number.isFinite(page)) {
     throw new ApiError(400, "Page is required");
@@ -24,7 +24,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Limit is required");
   }
 
-  const comments = await Comment.aggregate([
+  const allComments = await Comment.aggregate([
     {
       $match: {
         video: videoId,
@@ -32,7 +32,16 @@ const getVideoComments = asyncHandler(async (req, res) => {
     },
   ]);
 
-  console.log(comments);
+  const comments = await Comment.aggregatePaginate(
+    Comment.aggregate(allComments),
+    { page, limit }
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, comments, "Fetched all the comments on a video")
+    );
 });
 
 const addComment = asyncHandler(async (req, res) => {
@@ -62,4 +71,65 @@ const addComment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, comment, "Comment created successfuly"));
 });
 
-export { getVideoComments, addComment };
+const updateComment = asyncHandler(async (req, res) => {
+  //TODO:
+  // get comment Id
+  // validate comment id
+  // update the content of comment
+
+  const { commentId } = req.params;
+  const { content } = req.body;
+
+  if (!isValidObjectId(commentId)) {
+    throw new ApiError(400, "Invalid comment Id");
+  }
+
+  if (!content) {
+    throw new ApiError(400, "Content is required");
+  }
+
+  const comment = await Comment.findByIdAndUpdate(
+    commentId,
+    {
+      $set: {
+        content,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!comment) {
+    throw new ApiError(500, "Something went wrong while updating comment");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, comment, "Updated comment successfuly"));
+});
+
+const deleteComment = asyncHandler(async (req, res) => {
+  //TODO:
+  // get comment Id
+  // validate comment id
+  // delete the comment
+
+  const { commentId } = req.params;
+
+  if (!isValidObjectId(commentId)) {
+    throw new ApiError(400, "Invalid Comment Id");
+  }
+
+  const comment = await Comment.findByIdAndDelete(commentId);
+
+  if (!comment) {
+    throw new ApiError(500, "Something went wrong while deleting the comment");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, comment, "Successfuly deleted the comment"));
+});
+
+export { getVideoComments, addComment, updateComment, deleteComment };
