@@ -1,5 +1,3 @@
-name, description, video, owner;
-
 import mongoose from "mongoose";
 
 const playlistSchema = new mongoose.Schema(
@@ -11,9 +9,8 @@ const playlistSchema = new mongoose.Schema(
     description: {
       type: String,
       required: true,
-      unique: true,
     },
-    video: [
+    videos: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Video",

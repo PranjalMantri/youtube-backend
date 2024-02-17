@@ -72,11 +72,6 @@ const addComment = asyncHandler(async (req, res) => {
 });
 
 const updateComment = asyncHandler(async (req, res) => {
-  //TODO:
-  // get comment Id
-  // validate comment id
-  // update the content of comment
-
   const { commentId } = req.params;
   const { content } = req.body;
 
@@ -110,11 +105,6 @@ const updateComment = asyncHandler(async (req, res) => {
 });
 
 const deleteComment = asyncHandler(async (req, res) => {
-  //TODO:
-  // get comment Id
-  // validate comment id
-  // delete the comment
-
   const { commentId } = req.params;
 
   if (!isValidObjectId(commentId)) {
