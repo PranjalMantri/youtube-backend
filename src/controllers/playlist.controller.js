@@ -179,10 +179,68 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     );
 });
 
+const updatePlaylist = asyncHandler(async (req, res) => {
+  const { playlistId } = req.params;
+  const { name, description } = req.body;
+
+  if (!playlistId) {
+    throw new ApiError(400, "Invalid playlist Id");
+  }
+
+  if (!name) {
+    throw new ApiError(400, "Name is required");
+  }
+
+  if (!description) {
+    throw new ApiError(400, "Description is required");
+  }
+
+  const playlist = await Playlist.findByIdAndUpdate(
+    playlistId,
+    {
+      $set: {
+        name,
+        description,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!playlist) {
+    throw new ApiError(500, "Something went wrong while updating the playlist");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, playlist, "Playlist updated successfuly"));
+});
+
+const deletePlaylist = asyncHandler(async (req, res) => {
+  const { playlistId } = req.params;
+
+  if (!playlistId) {
+    throw new ApiError(400, "Invalid playlist Id");
+  }
+
+  const playlist = await Playlist.findByIdAndDelete(playlistId);
+
+  if (!playlist) {
+    throw new ApiError(500, "Something went wrong while deleting the playlist");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, playlist, "Playlist deleted successfuly"));
+});
+
 export {
   createPlaylist,
   getUserPlaylist,
   getPlaylistById,
   addVideoToPlaylist,
   removeVideoFromPlaylist,
+  updatePlaylist,
+  deletePlaylist,
 };
