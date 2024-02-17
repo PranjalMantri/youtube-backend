@@ -12,8 +12,8 @@ router.use(verifyJWT);
 
 // secure routes
 router.route("/toggle/v/:videoId").post(toggleVideoLike);
-router.route("/toggle/c/:videoId").post(toggleCommentLike);
-router.route("/toggle/t/:videoId").post(toggleTweetLike);
+router.route("/toggle/c/:commentId").post(toggleCommentLike);
+router.route("/toggle/t/:tweetId").post(toggleTweetLike);
 router.route("/videos").get(getLikedVideos);
 
 export default router;
