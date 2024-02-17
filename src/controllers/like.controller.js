@@ -185,6 +185,34 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
     );
 });
 
-const getLikedVideos = asyncHandler(async (req, res) => {});
+const getLikedVideos = asyncHandler(async (req, res) => {
+  const user = await User.findOne({
+    refreshToken: req.cookies.refreshToken,
+  });
+
+  if (!user) {
+    throw new ApiError(400, "Could not get user");
+  }
+
+  const videos = await Like.find({
+    likedBy: user._id,
+    video: { $exists: true },
+  });
+
+  if (!videos) {
+    throw new ApiError(400, "No liked videos found");
+  }
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        numOfVideos: videos.length,
+        videos,
+      },
+      "Successfuly fetched all the videos like by the user"
+    )
+  );
+});
 
 export { toggleVideoLike, toggleCommentLike, toggleTweetLike, getLikedVideos };
