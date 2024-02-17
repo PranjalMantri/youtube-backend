@@ -7,8 +7,6 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const getChannelStats = asyncHandler(async (req, res) => {
-  //TODO: get total videos, total video views, total likes, total subsrcibers
-
   const user = await User.findOne({
     refreshToken: req.cookies.refreshToken,
   });
@@ -108,7 +106,25 @@ const getChannelStats = asyncHandler(async (req, res) => {
 });
 
 const getChannelVideos = asyncHandler(async (req, res) => {
-  //TODO: get all of the channel's videos
+  const user = await User.findOne({
+    refreshToken: req.cookies.refreshToken,
+  });
+
+  if (!user) {
+    throw new ApiError(400, "User not found");
+  }
+
+  const videos = await Video.find({
+    owner: user._id,
+  });
+
+  if (!videos) {
+    throw new ApiError(500, "Something went wrong while fetching videos");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Fetched all videos successfuly"));
 });
 
 export { getChannelStats, getChannelVideos };
